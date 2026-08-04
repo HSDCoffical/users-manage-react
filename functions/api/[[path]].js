@@ -1,20 +1,21 @@
+// functions/api/[[path]].js
 export async function onRequest(context) {
   const { request, params } = context;
   const path = params.path || '';
   
-  // 构建目标 URL（转发到你的 Worker）
   const targetUrl = `https://user-mgmt.2791389901.workers.dev/${path}`;
   
-  // 复制请求，但修改 Host 头
+  // 获取请求体（PUT/POST 需要转发 body）
+  let body = null;
+  if (request.method === 'PUT' || request.method === 'POST') {
+    body = await request.arrayBuffer();
+  }
+
   const newRequest = new Request(targetUrl, {
     method: request.method,
     headers: request.headers,
-    body: request.body,
+    body: body,
   });
-  
-  // 转发请求
-  const response = await fetch(newRequest);
-  
-  // 返回响应
-  return response;
+
+  return await fetch(newRequest);
 }

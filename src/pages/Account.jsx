@@ -9,11 +9,10 @@ export default function Account() {
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
-  // 加载用户信息（从后端 API）
   const loadUser = async () => {
     try {
       const response = await fetch('https://user-mgmt.2791389901.workers.dev/load-user', {
-        credentials: 'include' // 携带 cookie
+        credentials: 'include'
       });
       if (!response.ok) {
         if (response.status === 401) {
@@ -44,12 +43,10 @@ export default function Account() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // 只提交可修改的字段（排除 id, username, password 等）
       const payload = {
         avatar: user.avatar || null,
         bio: user.bio || null,
         badge: user.badge || null
-        // 如果有其他可编辑字段，加在这里
       };
 
       const response = await fetch('https://user-mgmt.2791389901.workers.dev/update-profile', {
@@ -66,7 +63,6 @@ export default function Account() {
 
       toast.success('个人资料更新成功！');
       setEditMode(false);
-      // 重新加载用户信息
       await loadUser();
     } catch (error) {
       toast.error(error.message);
@@ -77,15 +73,13 @@ export default function Account() {
 
   const handleLogout = async () => {
     try {
-      // 调用后端登出接口（可选）
       await fetch('https://user-mgmt.2791389901.workers.dev/logout', {
         method: 'POST',
         credentials: 'include'
       });
     } catch (e) {
-      // 即使后端登出失败，也清除前端状态
+      // ignore
     }
-    // 清除 cookie（通过设置过期）
     document.cookie = 'cfw_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT;';
     toast.success('已登出');
     navigate('/login');
@@ -102,7 +96,6 @@ export default function Account() {
 
       {editMode ? (
         <div className="flex flex-col gap-4">
-          {/* 编辑头像（示例） */}
           <input
             name="avatar"
             value={user.avatar || ''}

@@ -130,16 +130,26 @@ export default function Account() {
 
   if (loading) return (
     <div 
-      className="min-h-screen flex items-center justify-center bg-cover bg-center"
-      style={{ backgroundImage: 'url(/bg.jpg)' }}
+      className="min-h-screen flex items-center justify-center"
+      style={{ 
+        backgroundImage: 'url(/bg.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
     >
       <div className="text-white/80 text-lg">加载中...</div>
     </div>
   );
   if (!user) return (
     <div 
-      className="min-h-screen flex items-center justify-center bg-cover bg-center"
-      style={{ backgroundImage: 'url(/bg.jpg)' }}
+      className="min-h-screen flex items-center justify-center"
+      style={{ 
+        backgroundImage: 'url(/bg.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
     >
       <div className="text-white/80 text-lg">未找到用户信息</div>
     </div>
@@ -147,15 +157,19 @@ export default function Account() {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center"
-      style={{ backgroundImage: 'url(/bg.jpg)' }}
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ 
+        backgroundImage: 'url(/bg.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
     >
       <div className="bg-white/30 backdrop-blur-lg rounded-2xl shadow-2xl p-6 md:p-8 w-96 border border-white/30">
         <h2 className="text-2xl font-bold text-center mb-6 text-white drop-shadow-md">
           个人中心
         </h2>
 
-        {/* 头像区域 */}
         <div className="flex flex-col items-center mb-4">
           <div 
             className="w-24 h-24 rounded-full border-2 border-white/50 overflow-hidden cursor-pointer hover:opacity-80 transition shadow-lg"

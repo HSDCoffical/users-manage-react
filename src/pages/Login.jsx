@@ -23,7 +23,7 @@ export default function Login() {
           username: input.username,
           password: input.password
         }),
-        credentials: 'include' // 关键！允许跨域携带和保存 Cookie
+        credentials: 'include'
       });
 
       const data = await response.json();

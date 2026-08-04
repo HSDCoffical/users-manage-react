@@ -11,11 +11,10 @@ export default function Account() {
 
   const loadUser = async () => {
     try {
-      // 从 URL 获取 sessionId
       const urlParams = new URLSearchParams(window.location.search);
       const sessionId = urlParams.get('sessionId') || '';
 
-      let apiUrl = 'https://user-mgmt.2791389901.workers.dev/load-user';
+      let apiUrl = '/api/load-user';
       if (sessionId) {
         apiUrl += `?sessionId=${sessionId}`;
       }
@@ -59,10 +58,9 @@ export default function Account() {
         badge: user.badge || null
       };
 
-      // update-profile 也需要 sessionId
       const urlParams = new URLSearchParams(window.location.search);
       const sessionId = urlParams.get('sessionId') || '';
-      let apiUrl = 'https://user-mgmt.2791389901.workers.dev/update-profile';
+      let apiUrl = '/api/update-profile';
       if (sessionId) {
         apiUrl += `?sessionId=${sessionId}`;
       }
@@ -91,7 +89,7 @@ export default function Account() {
 
   const handleLogout = async () => {
     try {
-      await fetch('https://user-mgmt.2791389901.workers.dev/logout', {
+      await fetch('/api/logout', {
         method: 'POST',
         credentials: 'include'
       });

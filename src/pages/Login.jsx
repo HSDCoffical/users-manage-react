@@ -29,8 +29,14 @@ export default function Login() {
       const data = await response.json();
 
       if (response.ok) {
+        // 从响应头提取 sessionId
+        const setCookie = response.headers.get('set-cookie') || '';
+        const match = setCookie.match(/cfw_session=([^;]+)/);
+        const sessionId = match ? match[1] : '';
+
         toast.success('登录成功！');
-        navigate('/account');
+        // 通过 URL 参数传递 sessionId
+        navigate(`/account?sessionId=${sessionId}`);
       } else {
         toast.error(data.error || '登录失败');
       }

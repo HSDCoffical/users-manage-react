@@ -18,7 +18,8 @@ export default function Login() {
     setDebugInfo("⏳ 正在发送请求...");
 
     try {
-      const url = 'https://user-mgmt.2791389901.workers.dev/login';
+      // 改为相对路径，走 Pages Functions 代理
+      const url = '/api/login';
       const options = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,7 +36,6 @@ export default function Login() {
 
       setDebugInfo(`📥 响应状态: ${response.status} ${response.statusText}`);
 
-      // 获取响应文本
       const responseText = await response.text();
       setDebugInfo(`📄 响应体: ${responseText.substring(0, 200)}${responseText.length > 200 ? '...' : ''}`);
 
@@ -102,7 +102,6 @@ export default function Login() {
         </button>
       </form>
 
-      {/* 调试信息显示区域 */}
       {debugInfo && (
         <div className="mt-4 p-3 bg-gray-100 rounded text-xs text-gray-700 break-all max-h-40 overflow-auto border border-gray-200">
           <strong>🔍 调试信息:</strong>

@@ -19,15 +19,6 @@ export default function Register() {
       return;
     }
 
-    // 密码强度验证（8位以上 + 大写字母 + 特殊符号）
-    const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
-    if (!passwordRegex.test(user.password)) {
-      toast.error(
-        "密码必须至少8个字符，包含1个大写字母和1个特殊符号。"
-      );
-      return;
-    }
-
     setLoading(true);
     try {
       const response = await fetch('https://user-mgmt.2791389901.workers.dev/register', {
@@ -86,9 +77,6 @@ export default function Register() {
           {loading ? '注册中...' : '注册'}
         </button>
       </form>
-      <p className="text-gray-500 text-sm mt-4">
-        密码必须至少<b>8个字符</b>，包含<b>1个大写字母</b>和<b>1个特殊符号</b>。
-      </p>
       <p className="mt-4 text-center text-sm text-gray-600">
         已有账号？{' '}
         <a href="/login" className="text-blue-600 hover:underline">

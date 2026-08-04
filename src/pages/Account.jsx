@@ -11,9 +11,19 @@ export default function Account() {
 
   const loadUser = async () => {
     try {
-      const response = await fetch('https://user-mgmt.2791389901.workers.dev/load-user', {
+      // 从 URL 获取 sessionId
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('sessionId') || '';
+
+      let apiUrl = 'https://user-mgmt.2791389901.workers.dev/load-user';
+      if (sessionId) {
+        apiUrl += `?sessionId=${sessionId}`;
+      }
+
+      const response = await fetch(apiUrl, {
         credentials: 'include'
       });
+
       if (!response.ok) {
         if (response.status === 401) {
           toast.error('请先登录');
@@ -48,16 +58,27 @@ export default function Account() {
         bio: user.bio || null,
         badge: user.badge || null
       };
-      const response = await fetch('https://user-mgmt.2791389901.workers.dev/update-profile', {
+
+      // update-profile 也需要 sessionId
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('sessionId') || '';
+      let apiUrl = 'https://user-mgmt.2791389901.workers.dev/update-profile';
+      if (sessionId) {
+        apiUrl += `?sessionId=${sessionId}`;
+      }
+
+      const response = await fetch(apiUrl, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
         credentials: 'include'
       });
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || '更新失败');
       }
+
       toast.success('个人资料更新成功！');
       setEditMode(false);
       await loadUser();
@@ -80,98 +101,74 @@ export default function Account() {
     navigate('/login');
   };
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-cover bg-center" style={{backgroundImage: 'url(/bg.jpg)'}}>
-      <div className="text-white text-lg">加载中...</div>
-    </div>
-  );
-  if (!user) return (
-    <div className="min-h-screen flex items-center justify-center bg-cover bg-center" style={{backgroundImage: 'url(/bg.jpg)'}}>
-      <div className="text-white text-lg">未找到用户信息</div>
-    </div>
-  );
+  if (loading) return <div className="text-center py-8">加载中...</div>;
+  if (!user) return <div className="text-center py-8">未找到用户信息</div>;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center" style={{backgroundImage: 'url(/bg.jpg)'}}>
-      <div className="w-full max-w-2xl backdrop-blur-md bg-white/30 rounded-2xl shadow-2xl p-6 md:p-8 border border-white/20">
-        {/* 头像和基本信息 */}
-        <div className="flex flex-col md:flex-row items-center gap-6">
-          <img
-            src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=3b82f6&color=fff&size=128`}
-            alt="avatar"
-            className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white/60 shadow-lg object-cover"
+    <div className="bg-white p-8 rounded-lg shadow-lg w-96">
+      <h2 className="text-2xl font-bold text-center mb-6 text-blue-600">
+        个人中心
+      </h2>
+
+      {editMode ? (
+        <div className="flex flex-col gap-4">
+          <input
+            name="avatar"
+            value={user.avatar || ''}
+            onChange={handleChange}
+            placeholder="头像 URL"
+            className="border rounded px-3 py-2 focus:outline-blue-500"
           />
-          <div className="flex-1 text-center md:text-left">
-            <h1 className="text-2xl md:text-3xl font-bold text-white drop-shadow-md">{user.username}</h1>
-            <div className="flex flex-wrap gap-2 mt-1 justify-center md:justify-start">
-              <span className="px-3 py-1 bg-blue-500/80 text-white text-sm rounded-full backdrop-blur-sm">角色: {user.role || '用户'}</span>
-              {user.badge && <span className="px-3 py-1 bg-yellow-500/80 text-white text-sm rounded-full backdrop-blur-sm">🏅 {user.badge}</span>}
-            </div>
-            <p className="mt-2 text-white/90 text-sm md:text-base">{user.bio || '这个人很懒，什么都没写~'}</p>
-            <p className="mt-1 text-white/70 text-xs">加入时间: {user.created_at ? new Date(user.created_at).toLocaleString() : '未知'}</p>
-          </div>
-        </div>
-
-        {/* 编辑模式 */}
-        {editMode && (
-          <div className="mt-6 space-y-3 border-t border-white/20 pt-4">
-            <input
-              name="avatar"
-              value={user.avatar || ''}
-              onChange={handleChange}
-              placeholder="头像 URL"
-              className="w-full bg-white/50 backdrop-blur-sm border border-white/30 rounded-lg px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <input
-              name="bio"
-              value={user.bio || ''}
-              onChange={handleChange}
-              placeholder="个人简介"
-              className="w-full bg-white/50 backdrop-blur-sm border border-white/30 rounded-lg px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <input
-              name="badge"
-              value={user.badge || ''}
-              onChange={handleChange}
-              placeholder="徽章"
-              className="w-full bg-white/50 backdrop-blur-sm border border-white/30 rounded-lg px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex-1 bg-green-500/80 backdrop-blur-sm text-white py-2 rounded-lg hover:bg-green-600/80 transition disabled:opacity-50"
-              >
-                {saving ? '保存中...' : '保存'}
-              </button>
-              <button
-                onClick={() => setEditMode(false)}
-                className="flex-1 bg-white/30 backdrop-blur-sm text-white py-2 rounded-lg hover:bg-white/40 transition"
-              >
-                取消
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* 操作按钮 */}
-        <div className="mt-6 flex flex-wrap gap-3 border-t border-white/20 pt-4">
-          {!editMode && (
-            <button
-              onClick={() => setEditMode(true)}
-              className="px-6 py-2 bg-blue-500/80 backdrop-blur-sm text-white rounded-lg hover:bg-blue-600/80 transition"
-            >
-              编辑资料
-            </button>
-          )}
+          <input
+            name="bio"
+            value={user.bio || ''}
+            onChange={handleChange}
+            placeholder="个人简介"
+            className="border rounded px-3 py-2 focus:outline-blue-500"
+          />
+          <input
+            name="badge"
+            value={user.badge || ''}
+            onChange={handleChange}
+            placeholder="徽章"
+            className="border rounded px-3 py-2 focus:outline-blue-500"
+          />
           <button
-            onClick={handleLogout}
-            className="px-6 py-2 bg-red-500/80 backdrop-blur-sm text-white rounded-lg hover:bg-red-600/80 transition ml-auto"
+            onClick={handleSave}
+            disabled={saving}
+            className="bg-green-600 text-white py-2 rounded hover:bg-green-700 transition disabled:opacity-50"
           >
-            登出
+            {saving ? '保存中...' : '保存'}
+          </button>
+          <button
+            onClick={() => setEditMode(false)}
+            className="bg-gray-300 text-gray-700 py-2 rounded hover:bg-gray-400 transition"
+          >
+            取消
           </button>
         </div>
-      </div>
+      ) : (
+        <div className="space-y-2">
+          <p><b>用户名：</b>{user.username}</p>
+          <p><b>头像：</b>{user.avatar || '未设置'}</p>
+          <p><b>简介：</b>{user.bio || '未设置'}</p>
+          <p><b>徽章：</b>{user.badge || '未设置'}</p>
+          <p><b>角色：</b>{user.role}</p>
+          <button
+            onClick={() => setEditMode(true)}
+            className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition w-full mt-4"
+          >
+            编辑资料
+          </button>
+        </div>
+      )}
+
+      <button
+        onClick={handleLogout}
+        className="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition w-full mt-4"
+      >
+        登出
+      </button>
     </div>
   );
 }

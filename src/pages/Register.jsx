@@ -47,21 +47,8 @@ export default function Register() {
     }
   };
 
-  const backgroundStyle = {
-    backgroundImage: 'url("/bg.jpg")',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center center',
-    backgroundRepeat: 'no-repeat',
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '1rem',
-    backgroundColor: '#1a2a4a'
-  };
-
   return (
-    <div style={backgroundStyle}>
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="bg-white/30 backdrop-blur-lg rounded-2xl shadow-2xl p-6 md:p-8 w-96 border border-white/30">
         <h2 className="text-2xl font-bold text-center mb-6 text-white drop-shadow-md">
           注册账号

@@ -27,7 +27,8 @@ export default function Register() {
         body: JSON.stringify({
           username: user.username,
           password: user.password,
-        })
+        }),
+        credentials: 'include'
       });
 
       const data = await response.json();

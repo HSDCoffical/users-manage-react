@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -7,6 +7,8 @@ export default function Account() {
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState("");
+  const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
   const loadUser = async () => {
@@ -33,6 +35,7 @@ export default function Account() {
       }
       const data = await response.json();
       setUser(data);
+      setAvatarPreview(data.avatar || '');
     } catch (error) {
       console.error(error);
       toast.error('加载用户信息失败');
@@ -49,13 +52,42 @@ export default function Account() {
     setUser({ ...user, [e.target.name]: e.target.value });
   };
 
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // 限制文件大小（2MB）
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('图片大小不能超过 2MB');
+      return;
+    }
+
+    // 限制图片格式
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+      toast.error('仅支持 JPG、PNG、WebP、GIF 格式');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target.result;
+      setAvatarPreview(base64);
+      setUser({ ...user, avatar: base64 });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
       const payload = {
         avatar: user.avatar || null,
         bio: user.bio || null,
-        badge: user.badge || null
+        // 去掉了 badge
       };
 
       const urlParams = new URLSearchParams(window.location.search);
@@ -108,15 +140,40 @@ export default function Account() {
         个人中心
       </h2>
 
+      {/* 头像区域 */}
+      <div className="flex flex-col items-center mb-4">
+        <div 
+          className="w-24 h-24 rounded-full border-2 border-blue-200 overflow-hidden cursor-pointer hover:opacity-80 transition"
+          onClick={triggerFileInput}
+        >
+          <img
+            src={avatarPreview || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=3b82f6&color=fff&size=128`}
+            alt="avatar"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        {editMode && (
+          <div className="mt-2">
+            <button
+              onClick={triggerFileInput}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              更换头像
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarChange}
+              className="hidden"
+            />
+            <p className="text-xs text-gray-400 mt-1">点击头像上传 · 支持 JPG/PNG</p>
+          </div>
+        )}
+      </div>
+
       {editMode ? (
         <div className="flex flex-col gap-4">
-          <input
-            name="avatar"
-            value={user.avatar || ''}
-            onChange={handleChange}
-            placeholder="头像 URL"
-            className="border rounded px-3 py-2 focus:outline-blue-500"
-          />
           <input
             name="bio"
             value={user.bio || ''}
@@ -124,34 +181,27 @@ export default function Account() {
             placeholder="个人简介"
             className="border rounded px-3 py-2 focus:outline-blue-500"
           />
-          <input
-            name="badge"
-            value={user.badge || ''}
-            onChange={handleChange}
-            placeholder="徽章"
-            className="border rounded px-3 py-2 focus:outline-blue-500"
-          />
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="bg-green-600 text-white py-2 rounded hover:bg-green-700 transition disabled:opacity-50"
-          >
-            {saving ? '保存中...' : '保存'}
-          </button>
-          <button
-            onClick={() => setEditMode(false)}
-            className="bg-gray-300 text-gray-700 py-2 rounded hover:bg-gray-400 transition"
-          >
-            取消
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700 transition disabled:opacity-50"
+            >
+              {saving ? '保存中...' : '保存'}
+            </button>
+            <button
+              onClick={() => setEditMode(false)}
+              className="flex-1 bg-gray-300 text-gray-700 py-2 rounded hover:bg-gray-400 transition"
+            >
+              取消
+            </button>
+          </div>
         </div>
       ) : (
         <div className="space-y-2">
           <p><b>用户名：</b>{user.username}</p>
-          <p><b>头像：</b>{user.avatar || '未设置'}</p>
           <p><b>简介：</b>{user.bio || '未设置'}</p>
-          <p><b>徽章：</b>{user.badge || '未设置'}</p>
-          <p><b>角色：</b>{user.role}</p>
+          <p><b>角色：</b>{user.role || '用户'}</p>
           <button
             onClick={() => setEditMode(true)}
             className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition w-full mt-4"

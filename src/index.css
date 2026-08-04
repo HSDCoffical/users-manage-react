@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+/* 全局背景图 - 所有页面自动生效 */
+body {
+  background-image: url('/bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  min-height: 100vh;
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+}

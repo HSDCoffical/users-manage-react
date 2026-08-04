@@ -5,90 +5,151 @@ import toast from "react-hot-toast";
 export default function Account() {
   const [user, setUser] = useState(null);
   const [editMode, setEditMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
-  const fetchUser = () => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    setUser(storedUser);
+  // 加载用户信息（从后端 API）
+  const loadUser = async () => {
+    try {
+      const response = await fetch('https://user-mgmt.2791389901.workers.dev/load-user', {
+        credentials: 'include' // 携带 cookie
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error('请先登录');
+          navigate('/login');
+          return;
+        }
+        throw new Error('加载用户信息失败');
+      }
+      const data = await response.json();
+      setUser(data);
+    } catch (error) {
+      console.error(error);
+      toast.error('加载用户信息失败');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    const loggedIn = localStorage.getItem("loggedIn");
-    if (!loggedIn) {
-      navigate("/login");
-      return;
-    }
-    fetchUser();
-  }, [navigate]);
+    loadUser();
+  }, []);
 
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
   };
 
-  const handleSave = () => {
-    localStorage.setItem("user", JSON.stringify(user));
-    fetchUser(); // refresh data
-    setEditMode(false);
-    toast.success("Account updated successfully!");
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // 只提交可修改的字段（排除 id, username, password 等）
+      const payload = {
+        avatar: user.avatar || null,
+        bio: user.bio || null,
+        badge: user.badge || null
+        // 如果有其他可编辑字段，加在这里
+      };
+
+      const response = await fetch('https://user-mgmt.2791389901.workers.dev/update-profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '更新失败');
+      }
+
+      toast.success('个人资料更新成功！');
+      setEditMode(false);
+      // 重新加载用户信息
+      await loadUser();
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("loggedIn");
-    toast.success("Logged out!");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      // 调用后端登出接口（可选）
+      await fetch('https://user-mgmt.2791389901.workers.dev/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (e) {
+      // 即使后端登出失败，也清除前端状态
+    }
+    // 清除 cookie（通过设置过期）
+    document.cookie = 'cfw_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT;';
+    toast.success('已登出');
+    navigate('/login');
   };
 
-  if (!user) return null;
+  if (loading) return <div className="text-center py-8">加载中...</div>;
+  if (!user) return <div className="text-center py-8">未找到用户信息</div>;
 
   return (
     <div className="bg-white p-8 rounded-lg shadow-lg w-96">
       <h2 className="text-2xl font-bold text-center mb-6 text-blue-600">
-        My Account
+        个人中心
       </h2>
 
       {editMode ? (
         <div className="flex flex-col gap-4">
+          {/* 编辑头像（示例） */}
           <input
-            name="name"
-            value={user.name}
+            name="avatar"
+            value={user.avatar || ''}
             onChange={handleChange}
+            placeholder="头像 URL"
             className="border rounded px-3 py-2 focus:outline-blue-500"
           />
           <input
-            name="email"
-            value={user.email}
+            name="bio"
+            value={user.bio || ''}
             onChange={handleChange}
+            placeholder="个人简介"
             className="border rounded px-3 py-2 focus:outline-blue-500"
           />
           <input
-            name="password"
-            value={user.password}
+            name="badge"
+            value={user.badge || ''}
             onChange={handleChange}
+            placeholder="徽章"
             className="border rounded px-3 py-2 focus:outline-blue-500"
           />
           <button
             onClick={handleSave}
-            className="bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+            disabled={saving}
+            className="bg-green-600 text-white py-2 rounded hover:bg-green-700 transition disabled:opacity-50"
           >
-            Save
+            {saving ? '保存中...' : '保存'}
+          </button>
+          <button
+            onClick={() => setEditMode(false)}
+            className="bg-gray-300 text-gray-700 py-2 rounded hover:bg-gray-400 transition"
+          >
+            取消
           </button>
         </div>
       ) : (
         <div className="space-y-2">
-          <p>
-            <b>Name:</b> {user.name}
-          </p>
-          <p>
-            <b>Email:</b> {user.email}
-          </p>
-          <p>
-            <b>Password:</b> {user.password}
-          </p>
+          <p><b>用户名：</b>{user.username}</p>
+          <p><b>头像：</b>{user.avatar || '未设置'}</p>
+          <p><b>简介：</b>{user.bio || '未设置'}</p>
+          <p><b>徽章：</b>{user.badge || '未设置'}</p>
+          <p><b>角色：</b>{user.role}</p>
           <button
             onClick={() => setEditMode(true)}
             className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition w-full mt-4"
           >
-            Edit
+            编辑资料
           </button>
         </div>
       )}
@@ -97,7 +158,7 @@ export default function Account() {
         onClick={handleLogout}
         className="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700 transition w-full mt-4"
       >
-        Logout
+        登出
       </button>
     </div>
   );

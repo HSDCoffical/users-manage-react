@@ -22,15 +22,14 @@ export default function Login() {
         body: JSON.stringify({
           username: input.username,
           password: input.password
-        })
+        }),
+        credentials: 'include' // 关键！允许跨域携带和保存 Cookie
       });
 
       const data = await response.json();
 
       if (response.ok) {
         toast.success('登录成功！');
-        // 登录后，浏览器会自动保存 Set-Cookie 中的 session，无需手动存储
-        // 跳转到个人中心
         navigate('/account');
       } else {
         toast.error(data.error || '登录失败');

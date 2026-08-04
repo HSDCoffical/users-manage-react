@@ -15,8 +15,13 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
+    // 清空旧日志
+    console.clear();
+    console.log('=== 登录请求开始 ===');
+
     try {
-      const response = await fetch('https://user-mgmt.2791389901.workers.dev/login', {
+      const url = 'https://user-mgmt.2791389901.workers.dev/login';
+      const options = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -24,9 +29,30 @@ export default function Login() {
           password: input.password
         }),
         credentials: 'include'
-      });
+      };
 
-      const data = await response.json();
+      console.log('请求 URL:', url);
+      console.log('请求参数:', options);
+
+      const response = await fetch(url, options);
+
+      console.log('响应状态:', response.status, response.statusText);
+      console.log('响应头:', [...response.headers.entries()]);
+
+      // 尝试获取响应文本（用于调试）
+      const responseText = await response.text();
+      console.log('原始响应体:', responseText);
+
+      // 解析 JSON（如果可能）
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error('响应体不是有效的 JSON:', responseText);
+        toast.error('服务器返回了非 JSON 数据，请检查后端');
+        setLoading(false);
+        return;
+      }
 
       if (response.ok) {
         // 从响应头提取 sessionId
@@ -34,17 +60,22 @@ export default function Login() {
         const match = setCookie.match(/cfw_session=([^;]+)/);
         const sessionId = match ? match[1] : '';
 
+        console.log('登录成功，sessionId:', sessionId);
         toast.success('登录成功！');
-        // 通过 URL 参数传递 sessionId
         navigate(`/account?sessionId=${sessionId}`);
       } else {
-        toast.error(data.error || '登录失败');
+        console.error('登录失败，后端返回:', data);
+        toast.error(data.error || `登录失败 (${response.status})`);
       }
     } catch (error) {
-      toast.error('网络错误，请稍后重试');
-      console.error(error);
+      console.error('=== 网络/程序异常 ===');
+      console.error('错误类型:', error.name);
+      console.error('错误信息:', error.message);
+      console.error('完整错误对象:', error);
+      toast.error('网络错误，请检查连接或查看控制台');
     } finally {
       setLoading(false);
+      console.log('=== 登录请求结束 ===');
     }
   };
 

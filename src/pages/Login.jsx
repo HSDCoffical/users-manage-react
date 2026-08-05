@@ -17,6 +17,15 @@ export default function Login() {
     setLoading(true);
     setDebugInfo("⏳ 正在发送请求...");
 
+    // 创建 AbortController 用于超时控制
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      setDebugInfo("❌ 请求超时（10秒），请检查网络或后端");
+      toast.error('请求超时，请稍后重试');
+      setLoading(false);
+    }, 10000); // 10秒超时
+
     try {
       const url = 'https://user-mgmt.2791389901.workers.dev/login';
       const options = {
@@ -26,13 +35,15 @@ export default function Login() {
           username: input.username,
           password: input.password
         }),
-        credentials: 'include'
+        credentials: 'include',
+        signal: controller.signal, // 添加 abort 信号
       };
 
       setDebugInfo(`📤 请求: POST ${url}`);
       const response = await fetch(url, options);
-      setDebugInfo(`📥 响应状态: ${response.status} ${response.statusText}`);
+      clearTimeout(timeoutId); // 清除超时定时器
 
+      setDebugInfo(`📥 响应状态: ${response.status} ${response.statusText}`);
       const responseText = await response.text();
       setDebugInfo(`📄 响应体: ${responseText}`);
 
@@ -49,15 +60,20 @@ export default function Login() {
       if (response.ok) {
         setDebugInfo(`✅ 登录成功！`);
         toast.success('登录成功！');
-        // 跳转到个人中心，带上用户名
         navigate(`/account?username=${input.username}`);
       } else {
         setDebugInfo(`❌ 登录失败: ${data.error || '未知错误'}`);
         toast.error(data.error || `登录失败 (${response.status})`);
       }
     } catch (error) {
-      setDebugInfo(`❌ 异常: ${error.name} - ${error.message}`);
-      toast.error('网络错误，请检查连接');
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        setDebugInfo(`❌ 请求被中止（超时）`);
+        toast.error('请求超时，请检查网络');
+      } else {
+        setDebugInfo(`❌ 异常: ${error.name} - ${error.message}`);
+        toast.error('网络错误，请检查连接');
+      }
     } finally {
       setLoading(false);
     }

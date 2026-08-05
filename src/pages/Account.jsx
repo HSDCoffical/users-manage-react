@@ -11,23 +11,19 @@ export default function Account() {
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
+  // ===== 核心修改：从 URL 参数读取用户名 =====
   const loadUser = async () => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      const sessionId = urlParams.get('sessionId') || '';
+      const username = urlParams.get('username') || '111'; // 默认 111
 
-      let apiUrl = '/api/load-user';
-      if (sessionId) {
-        apiUrl += `?sessionId=${sessionId}`;
-      }
-
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`/api/load-user?username=${username}`, {
         credentials: 'include'
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          toast.error('请先登录');
+        if (response.status === 404) {
+          toast.error('用户不存在');
           navigate('/login');
           return;
         }
@@ -79,6 +75,7 @@ export default function Account() {
     fileInputRef.current?.click();
   };
 
+  // ===== 保存资料时也带上 username =====
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -88,13 +85,9 @@ export default function Account() {
       };
 
       const urlParams = new URLSearchParams(window.location.search);
-      const sessionId = urlParams.get('sessionId') || '';
-      let apiUrl = '/api/update-profile';
-      if (sessionId) {
-        apiUrl += `?sessionId=${sessionId}`;
-      }
+      const username = urlParams.get('username') || '111';
 
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`/api/update-profile?username=${username}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -128,7 +121,6 @@ export default function Account() {
     navigate('/login');
   };
 
-  // 加载状态
   if (loading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center" style={{ backgroundImage: 'url(/bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
@@ -152,7 +144,6 @@ export default function Account() {
             个人中心
           </h2>
 
-          {/* 头像区域 */}
           <div className="flex flex-col items-center mb-6">
             <div 
               className="relative w-28 h-28 rounded-full border-4 border-white/40 overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-300 shadow-xl hover:shadow-blue-500/20"

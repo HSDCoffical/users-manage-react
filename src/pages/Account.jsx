@@ -14,8 +14,21 @@ export default function Account() {
 
   const loadUser = async () => {
     try {
+      // 1. 从 URL 参数获取 username
       const urlParams = new URLSearchParams(window.location.search);
-      const username = urlParams.get('username') || 'test123';
+      let username = urlParams.get('username');
+
+      // 2. 如果 URL 没有，从 localStorage 读取（保持登录）
+      if (!username) {
+        username = localStorage.getItem('username');
+      }
+
+      // 3. 如果还没有，跳转到登录
+      if (!username) {
+        toast.error('请先登录');
+        navigate('/login');
+        return;
+      }
 
       const response = await fetch(`https://workers-users.2791389901.workers.dev/load-user?username=${username}`, {
         credentials: 'include'
@@ -24,6 +37,8 @@ export default function Account() {
       if (!response.ok) {
         if (response.status === 404) {
           toast.error('用户不存在');
+          // 清除无效的登录状态
+          localStorage.removeItem('username');
           navigate('/login');
           return;
         }
@@ -38,6 +53,24 @@ export default function Account() {
     } catch (error) {
       console.error(error);
       toast.error('加载用户信息失败');
+      // 如果加载失败，尝试从 localStorage 恢复
+      const savedUsername = localStorage.getItem('username');
+      if (savedUsername) {
+        // 重试一次
+        try {
+          const retryResponse = await fetch(`https://workers-users.2791389901.workers.dev/load-user?username=${savedUsername}`, {
+            credentials: 'include'
+          });
+          if (retryResponse.ok) {
+            const data = await retryResponse.json();
+            setUser(data);
+            setAvatarPreview(data.avatar || '');
+            loadMessages(savedUsername);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {}
+      }
     } finally {
       setLoading(false);
     }
@@ -99,7 +132,13 @@ export default function Account() {
       };
 
       const urlParams = new URLSearchParams(window.location.search);
-      const username = urlParams.get('username') || 'test123';
+      let username = urlParams.get('username') || localStorage.getItem('username');
+
+      if (!username) {
+        toast.error('请先登录');
+        navigate('/login');
+        return;
+      }
 
       const response = await fetch(`https://workers-users.2791389901.workers.dev/update-profile?username=${username}`, {
         method: 'PUT',
@@ -130,6 +169,9 @@ export default function Account() {
         credentials: 'include'
       });
     } catch (e) {}
+    // 清除所有登录状态
+    localStorage.removeItem('username');
+    localStorage.removeItem('sessionId');
     document.cookie = 'cfw_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT;';
     toast.success('已登出');
     navigate('/login');

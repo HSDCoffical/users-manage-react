@@ -17,17 +17,17 @@ export default function Login() {
     setLoading(true);
     setDebugInfo("⏳ 正在发送请求...");
 
-    // 创建 AbortController 用于超时控制
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
       setDebugInfo("❌ 请求超时（10秒），请检查网络或后端");
       toast.error('请求超时，请稍后重试');
       setLoading(false);
-    }, 10000); // 10秒超时
+    }, 10000);
 
     try {
-      const url = 'https://user-mgmt.2791389901.workers.dev/login';
+      // 修改：API 地址改为 workers-users
+      const url = 'https://workers-users.2791389901.workers.dev/login';
       const options = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -36,12 +36,12 @@ export default function Login() {
           password: input.password
         }),
         credentials: 'include',
-        signal: controller.signal, // 添加 abort 信号
+        signal: controller.signal,
       };
 
       setDebugInfo(`📤 请求: POST ${url}`);
       const response = await fetch(url, options);
-      clearTimeout(timeoutId); // 清除超时定时器
+      clearTimeout(timeoutId);
 
       setDebugInfo(`📥 响应状态: ${response.status} ${response.statusText}`);
       const responseText = await response.text();
@@ -113,7 +113,6 @@ export default function Login() {
           </button>
         </form>
 
-        {/* 调试信息区域 */}
         {debugInfo && (
           <div className="mt-4 p-3 bg-black/30 backdrop-blur-sm rounded-lg text-xs text-white break-all max-h-40 overflow-auto border border-white/20">
             <strong>🔍 调试信息:</strong>

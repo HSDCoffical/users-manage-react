@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 export default function Login() {
   const [input, setInput] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [debugInfo, setDebugInfo] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -14,9 +15,11 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setDebugInfo("⏳ 正在发送请求...");
 
     try {
-      const response = await fetch('/api/login', {
+      const url = 'https://user-mgmt.2791389901.workers.dev/login';
+      const options = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -24,44 +27,44 @@ export default function Login() {
           password: input.password
         }),
         credentials: 'include'
-      });
+      };
 
-      const data = await response.json();
+      setDebugInfo(`📤 请求: POST ${url}`);
+      const response = await fetch(url, options);
+      setDebugInfo(`📥 响应状态: ${response.status} ${response.statusText}`);
+
+      const responseText = await response.text();
+      setDebugInfo(`📄 响应体: ${responseText}`);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        setDebugInfo(`❌ 响应不是 JSON: ${responseText}`);
+        toast.error('服务器返回了非 JSON 数据');
+        setLoading(false);
+        return;
+      }
 
       if (response.ok) {
-        const setCookie = response.headers.get('set-cookie') || '';
-        const match = setCookie.match(/cfw_session=([^;]+)/);
-        const sessionId = match ? match[1] : '';
-
+        setDebugInfo(`✅ 登录成功！`);
         toast.success('登录成功！');
-        navigate(`/account?sessionId=${sessionId}`);
+        // 跳转到个人中心，带上用户名
+        navigate(`/account?username=${input.username}`);
       } else {
-        toast.error(data.error || '登录失败');
+        setDebugInfo(`❌ 登录失败: ${data.error || '未知错误'}`);
+        toast.error(data.error || `登录失败 (${response.status})`);
       }
     } catch (error) {
-      toast.error('网络错误，请稍后重试');
-      console.error(error);
+      setDebugInfo(`❌ 异常: ${error.name} - ${error.message}`);
+      toast.error('网络错误，请检查连接');
     } finally {
       setLoading(false);
     }
   };
 
-  // 背景图样式（内联 + 兜底）
-  const backgroundStyle = {
-    backgroundImage: 'url("/bg.jpg")',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center center',
-    backgroundRepeat: 'no-repeat',
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '1rem',
-    backgroundColor: '#1a2a4a' // 兜底颜色，图片加载失败时显示
-  };
-
   return (
-    <div style={backgroundStyle}>
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundImage: 'url(/bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <div className="bg-white/30 backdrop-blur-lg rounded-2xl shadow-2xl p-6 md:p-8 w-96 border border-white/30">
         <h2 className="text-2xl font-bold text-center mb-6 text-white drop-shadow-md">
           登录
@@ -93,6 +96,15 @@ export default function Login() {
             {loading ? '登录中...' : '登录'}
           </button>
         </form>
+
+        {/* 调试信息区域 */}
+        {debugInfo && (
+          <div className="mt-4 p-3 bg-black/30 backdrop-blur-sm rounded-lg text-xs text-white break-all max-h-40 overflow-auto border border-white/20">
+            <strong>🔍 调试信息:</strong>
+            <pre className="mt-1 whitespace-pre-wrap">{debugInfo}</pre>
+          </div>
+        )}
+
         <p className="mt-4 text-center text-sm text-white/80">
           还没有账号？{' '}
           <a href="/register" className="text-white hover:underline font-medium">

@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 
 export default function Login() {
   const [input, setInput] = useState({ username: "", password: "" });
+  const [rememberMe, setRememberMe] = useState(false); // 新增记住我状态
   const [loading, setLoading] = useState(false);
   const [debugInfo, setDebugInfo] = useState("");
   const navigate = useNavigate();
@@ -57,9 +58,21 @@ export default function Login() {
       }
 
       if (response.ok) {
-        // 保存用户名到 localStorage，保持登录状态
-        localStorage.setItem('username', input.username);
-        
+        // ===== 关键修改：只有勾选“记住我”时才保存到 localStorage =====
+        if (rememberMe) {
+          localStorage.setItem('username', input.username);
+          // 也保存 sessionId（从 Cookie 中获取或从响应头获取）
+          const setCookie = response.headers.get('set-cookie') || '';
+          const match = setCookie.match(/cfw_session=([^;]+)/);
+          if (match) {
+            localStorage.setItem('sessionId', match[1]);
+          }
+        } else {
+          // 不记住则清除之前保存的
+          localStorage.removeItem('username');
+          localStorage.removeItem('sessionId');
+        }
+
         setDebugInfo(`✅ 登录成功！`);
         toast.success('登录成功！');
         navigate(`/account?username=${input.username}`);
@@ -106,6 +119,21 @@ export default function Login() {
             className="bg-white/30 backdrop-blur-sm border border-white/30 rounded-lg px-4 py-3 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-blue-400"
             required
           />
+
+          {/* ===== 记住我 复选框 ===== */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="rememberMe"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-4 h-4 accent-blue-500 cursor-pointer"
+            />
+            <label htmlFor="rememberMe" className="text-sm text-white/80 cursor-pointer select-none">
+              保持登录状态
+            </label>
+          </div>
+
           <button
             type="submit"
             className="bg-blue-500/80 backdrop-blur-sm text-white py-3 rounded-lg hover:bg-blue-600/80 transition disabled:opacity-50"

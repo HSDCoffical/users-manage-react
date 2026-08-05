@@ -8,6 +8,7 @@ export default function Account() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState("");
+  const [messages, setMessages] = useState([]);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
@@ -31,11 +32,26 @@ export default function Account() {
       const data = await response.json();
       setUser(data);
       setAvatarPreview(data.avatar || '');
+      
+      // 加载消息
+      loadMessages(username);
     } catch (error) {
       console.error(error);
       toast.error('加载用户信息失败');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMessages = async (username) => {
+    try {
+      const response = await fetch(`https://workers-users.2791389901.workers.dev/get-messages?username=${username}`);
+      if (response.ok) {
+        const data = await response.json();
+        setMessages(data || []);
+      }
+    } catch (e) {
+      console.error('加载消息失败', e);
     }
   };
 
@@ -227,12 +243,43 @@ export default function Account() {
             </div>
           )}
 
-          <button
-            onClick={handleLogout}
-            className="w-full mt-4 bg-red-500/60 hover:bg-red-600/70 text-white font-medium py-2.5 rounded-xl backdrop-blur-sm transition"
-          >
-            登出
-          </button>
+          {/* ===== 消息中心（仅在非编辑模式显示） ===== */}
+          {!editMode && (
+            <div className="mt-6 border-t border-white/10 pt-4">
+              <h3 className="text-left text-sm font-medium text-white/70 mb-3">📬 消息中心</h3>
+              {messages.length === 0 ? (
+                <p className="text-center text-white/40 text-sm py-4">暂无消息</p>
+              ) : (
+                <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                  {messages.slice(0, 10).map((msg, idx) => (
+                    <div key={idx} className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/10">
+                      <div className="flex justify-between text-xs text-white/50">
+                        <span>{msg.title || '系统通知'}</span>
+                        <span>{msg.created_at || ''}</span>
+                      </div>
+                      <div className="text-sm text-white/80 mt-1">{msg.content}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ===== 返回首页 + 登出按钮（并排） ===== */}
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={() => window.location.href = 'https://hsdc.dpdns.org'}
+              className="flex-1 bg-blue-500/50 hover:bg-blue-600/60 text-white font-medium py-2.5 rounded-xl backdrop-blur-sm transition"
+            >
+              返回首页
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex-1 bg-red-500/60 hover:bg-red-600/70 text-white font-medium py-2.5 rounded-xl backdrop-blur-sm transition"
+            >
+              登出
+            </button>
+          </div>
         </div>
       </div>
     </div>

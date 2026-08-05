@@ -11,13 +11,12 @@ export default function Account() {
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
-  // ===== 核心修改：从 URL 参数读取用户名 =====
   const loadUser = async () => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      const username = urlParams.get('username') || '111'; // 默认 111
+      const username = urlParams.get('username') || 'test123';
 
-      const response = await fetch(`/api/load-user?username=${username}`, {
+      const response = await fetch(`https://workers-users.2791389901.workers.dev/load-user?username=${username}`, {
         credentials: 'include'
       });
 
@@ -75,7 +74,6 @@ export default function Account() {
     fileInputRef.current?.click();
   };
 
-  // ===== 保存资料时也带上 username =====
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -85,9 +83,9 @@ export default function Account() {
       };
 
       const urlParams = new URLSearchParams(window.location.search);
-      const username = urlParams.get('username') || '111';
+      const username = urlParams.get('username') || 'test123';
 
-      const response = await fetch(`/api/update-profile?username=${username}`, {
+      const response = await fetch(`https://workers-users.2791389901.workers.dev/update-profile?username=${username}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -111,7 +109,7 @@ export default function Account() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/logout', {
+      await fetch('https://workers-users.2791389901.workers.dev/logout', {
         method: 'POST',
         credentials: 'include'
       });
@@ -123,27 +121,28 @@ export default function Account() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center" style={{ backgroundImage: 'url(/bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div className="fixed inset-0 flex items-center justify-center bg-cover bg-center" style={{ backgroundImage: 'url(/bg.jpg)' }}>
         <div className="text-white/80 text-lg animate-pulse">加载中...</div>
       </div>
     );
   }
   if (!user) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center" style={{ backgroundImage: 'url(/bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div className="fixed inset-0 flex items-center justify-center bg-cover bg-center" style={{ backgroundImage: 'url(/bg.jpg)' }}>
         <div className="text-white/80 text-lg">未找到用户信息</div>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 overflow-y-auto" style={{ backgroundImage: 'url(/bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+    <div className="fixed inset-0 overflow-y-auto bg-cover bg-center" style={{ backgroundImage: 'url(/bg.jpg)' }}>
       <div className="min-h-full flex items-center justify-center p-4 backdrop-blur-[2px]">
-        <div className="w-full max-w-md bg-white/20 backdrop-blur-2xl rounded-3xl shadow-2xl p-6 md:p-8 border border-white/20 transition-all duration-300 hover:shadow-3xl">
+        <div className="w-full max-w-md bg-white/30 backdrop-blur-2xl rounded-3xl shadow-2xl p-6 md:p-8 border border-white/30 transition-all duration-300 hover:shadow-3xl">
           <h2 className="text-3xl font-bold text-center mb-6 text-white drop-shadow-lg">
             个人中心
           </h2>
 
+          {/* 头像区域 */}
           <div className="flex flex-col items-center mb-6">
             <div 
               className="relative w-28 h-28 rounded-full border-4 border-white/40 overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-300 shadow-xl hover:shadow-blue-500/20"

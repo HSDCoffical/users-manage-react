@@ -26,7 +26,6 @@ export default function Login() {
     }, 10000);
 
     try {
-      // 修改：API 地址改为 workers-users
       const url = 'https://workers-users.2791389901.workers.dev/login';
       const options = {
         method: 'POST',
@@ -58,6 +57,9 @@ export default function Login() {
       }
 
       if (response.ok) {
+        // 保存用户名到 localStorage，保持登录状态
+        localStorage.setItem('username', input.username);
+        
         setDebugInfo(`✅ 登录成功！`);
         toast.success('登录成功！');
         navigate(`/account?username=${input.username}`);
